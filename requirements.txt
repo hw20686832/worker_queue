@@ -1,0 +1,9 @@
+pika
+tornado
+torndb
+requests
+jieba
+pymongo
+redis
+gridfs
+thrift

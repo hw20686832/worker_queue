@@ -1,0 +1,1 @@
+from carsdb import CarSpecification
