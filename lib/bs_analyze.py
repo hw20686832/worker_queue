@@ -1,9 +1,8 @@
 #coding: utf-8
 from lib.sqlite_db import CarSpecification
-from lib.seg import split
 
 class BrandSeriesAnalysis(object):
-    """本类主要负责品牌与车系和车型的校验与提取
+    """本类主要负责品牌与车系和车型的校验与分词提取
     """
     def __init__(self, item):
         self.item = item
@@ -12,10 +11,14 @@ class BrandSeriesAnalysis(object):
 
     @property
     def seg(self):
+        from lib.seg import split
         self.seg_rs = self.seg_rs or split(self.item['car_title'])
         return self.seg_rs
 
     def verify_segment(self):
+        if u"别克" in self.seg["cf"]:
+            self.seg["cb"] = {u"别克"}
+            self.seg["cf"].remove(u"别克")
         for cb in self.seg['cb']:
             for cf in self.seg['cf']:
                 if self.verify_brandseries(cb, cf):
@@ -29,35 +32,15 @@ class BrandSeriesAnalysis(object):
 
         return {}
 
-    def extract_brand(self):
-        # 品牌分词提取
-        brand = None
-        for w in self.seg['cb']:
-            brand = self.verify_brand(w)
-            if brand:
-                break
-            
-        return brand
-
-    def extract_series(self):
-        # 车系分词提取
-        series = None
-        for w in self.seg['cf']:
-            series = self.verify_series(w)
-            if series:
-                break
-
-        return series
-
-    def verify_brand(self, b):
+    def verify_brand(self):
         # 品牌校验
-        brand = b
+        brand = self.item["car_brand"]
         brand = self.cars.trans_synonyms_brand(brand)
         return self.cars.has_brand(brand)
 
-    def verify_series(self, s):
+    def verify_series(self):
         # 车系校验
-        serie = s
+        serie = self.item["car_series"]
         serie = self.cars.trans_synonyms_series(serie)
         return self.cars.has_series(serie)
 
@@ -66,8 +49,7 @@ class BrandSeriesAnalysis(object):
         return brand == b
 
     def verify_type(self, t):
-        car_type = self.cars.has_type(t)
-        return car_type
+        return self.cars.has_type(self.item["car_type"])
 
     def verify_emission(self, e):
         # 排量校验

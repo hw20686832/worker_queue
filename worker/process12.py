@@ -7,10 +7,6 @@ from lib import Process12Main
 
 class processer(ProcesserBase):
     seq = "p12"
-    
-    def __init__(self):
-        ProcesserBase.__init__(self)
-    
     def process(self,data):
         
         if data.has_key("car_frame"):

@@ -35,7 +35,7 @@ def flush_dict():
     if (vo['car_brand_series'], vo['province_city_county']) != (br_v, ze_v):
         for c, tp in categories:
             data = json.loads(requests.get(CAR_ALL_URL + c).content)
-            lines.extend(['%s 30000 %s\n' % (re.sub('\s', '', x.encode('utf-8')), tp) for x in data if not x.isdigit()])
+            lines.extend(['%s %d %s\n' % (re.sub('\s', '', x.encode('utf-8')), 35000 if tp == 'cb' else 30000, tp) for x in data if not x.isdigit()])
 
         zonedata = json.loads(requests.get(ZONE_URL).content)
         for z, d in zonedata.items():

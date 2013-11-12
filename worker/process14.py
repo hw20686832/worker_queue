@@ -18,7 +18,7 @@ class processer(ProcesserBase):
         data['car_title'] = car_title
         
       
-        source_birth = Arrange14._source_birth(data['source_birth'])
+        source_birth = Arrange14._source_birth(data)
         data['source_birth'] = source_birth
         
         

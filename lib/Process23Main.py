@@ -1,13 +1,15 @@
 #coding:utf-8
-import re
-import urllib2,urllib
-import json
 import os
-import sqlite3
-import re,pymongo,time,itertools
 import sys
+import re
+import json
+import time
+import urllib, urllib2
+import itertools
 
-from lib.seg import splitting
+import pymongo
+
+#from lib.seg import splitting
 
 def _car_type(src):
     '''
@@ -96,6 +98,8 @@ def _source_province(src,mydict):
     '''
          信息发布所在地-省。根据省级字典规整化数据。如果含有市（区）信息，将其补充到source_zone。
     '''
+    from lib.seg import splitting
+    
 #    src=u"九龙坡"
     if src is not None and src!='':
         src = ''.join(src.split())

@@ -1,16 +1,12 @@
 #encoding:utf-8
-'''
-Created on 2012-4-23
-
-@author: James
-'''
-import re
-import urllib2,urllib
-import json
 import os
+import re
+import time, datetime
+import json
+import urllib, urllib2
 import sqlite3
+
 import common
-import datetime,time
 
 def _car_title(src):
     '''
@@ -26,10 +22,34 @@ def _car_title(src):
         
         return src
     
-def _source_birth(src):
+def _source_birth(item):
     '''
     _source_birth是月日年时分秒的混合，信息发布日期，将其规整化为YYYY-MM-DD hh:mm:ss，如果值为url。需要http请求后获得日期。
     '''
+    src = item["source_birth"].strip()
+    
+    # For 51auto format '1秒前发布','1分钟前发布','1小时前发布','1天前发布'
+    # Format to %Y-%m-%d %H:%M:%S
+    if item["domain"] == "51auto.com":
+        src = src.decode("unicode-escape")
+        created = item.get("created", time.time()*1000)
+        
+        periods = [
+            (u'秒', 1),
+            (u'分钟', 60),
+            (u'小时', 60 * 60),
+            (u'天', 24 * 60 * 60),
+        ]
+        for p, m in periods:
+            if p in src[:-3]:
+                dgt = src[:-3].replace(p, "")
+                d = int(dgt)
+                real_timestamp = int(created)/1000.0 - (d * m)
+                dt = datetime.datetime.fromtimestamp(real_timestamp)
+                break
+
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    
 #    current=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
 #    print current
     current=datetime.datetime.now() - datetime.timedelta(days=1)

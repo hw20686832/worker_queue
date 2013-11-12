@@ -65,9 +65,9 @@ class ProcesserBase(object):
         
         self.rabbitmq_server = settings.RABBITMQ_SERVER
         self.rabbitmq_port = settings.RABBITMQ_PORT
-        self.rabbitmq_virtual_host = settings.RABBITMQ_VIRTUAL_HOST
-        self.rabbitmq_auth_user = settings.RABBITMQ_AUTH_USER
-        self.rabbitmq_auth_pwd = settings.RABBITMQ_AUTH_PWD
+        self.rabbitmq_virtual_host = settings.RABBITMQ_VHOST
+        self.rabbitmq_auth_user = settings.RABBITMQ_USER
+        self.rabbitmq_auth_pwd = settings.RABBITMQ_PASS
         
         self.rabbitmq_credentials = pika.PlainCredentials(self.rabbitmq_auth_user, self.rabbitmq_auth_pwd)
         self.exchange_name = 'processing_exchange'

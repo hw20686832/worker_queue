@@ -14,15 +14,15 @@ class PushIndexHelper():
         'id'                :   __TYPE_STRING,  #唯一的数据标记
         'created'           :   __TYPE_LONG,    #记录创建时间;数据类型:long
         'updated'           :   __TYPE_LONG,    #更新时间;数据类型:long
-        'domain'	    :	__TYPE_STRING,  #域名标识
+        'domain'	        :	__TYPE_STRING,  #域名标识
         'url'               :   __TYPE_STRING,  #信息来源网址
         'car_title'         :   __TYPE_STRING,  #信息标题
         'car_brand'         :   __TYPE_STRING,  #车辆品牌
         'car_series'        :   __TYPE_STRING,  #品牌序列
         'car_style'         :   __TYPE_STRING,  #车辆类型
         'car_type'          :   __TYPE_STRING,  #车型，如2013款 豪华版 2.0T
-        'car_publish_logo' :  __TYPE_STRING,  #年款，2010款
-        'standard_title':     __TYPE_STRING,   #规整化标题
+        'car_publish_logo'  :  __TYPE_STRING,  #年款，2010款
+        'standard_title'    :     __TYPE_STRING,   #规整化标题
         'vehicle_code'      :   __TYPE_STRING,  #车型代码，对应redbook
         'car_type_score'    :   __TYPE_FLOAT,     #车型识别准确度
         'car_emission'      :   __TYPE_FLOAT,   #发动机排量;数据类型:float

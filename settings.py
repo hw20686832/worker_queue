@@ -3,8 +3,14 @@ PORT = 7100
 
 DEBUG = False
 
-RABBITMQ_SERVER = '192.168.2.229'
+# RabbitMQ config
+RABBITMQ_SERVER = "192.168.2.229"
 RABBITMQ_PORT = 5672
-RABBITMQ_VIRTUAL_HOST = '/dcrawler-pro'
-RABBITMQ_AUTH_USER = 'dcrawler'
-RABBITMQ_AUTH_PWD = '123'
+RABBITMQ_VHOST = '/dcrawler-pro'
+RABBITMQ_USER = 'dcrawler'
+RABBITMQ_PASS = '123'
+MQ_EXCHANGE = 'processing_exchange'
+MQ_INKEY = ''
+MQ_INQUEUE = ''
+MQ_OUTKEY = 'enroll'
+MQ_OUTQUEUE = 'enroll_queue'

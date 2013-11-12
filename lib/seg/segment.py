@@ -13,7 +13,7 @@ def split(words):
     return result
             
 def splitting(words):
-    seg_result = cut(sentence)
+    seg_result = cut(words)
     result = []
     for w in seg_result:
         result.append([w.word, [w.flag]])

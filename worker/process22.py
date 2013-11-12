@@ -18,10 +18,10 @@ class Processer(ProcesserBase):
 
         self.cars = CarSpecification()
         self.seg_rule = [
-            ("producted_year", u"(\d{2,4}).+[年款]?", 1),
-            ("logo_zh", u"^.+[版型级]", 0),
-            ("transmission_zh", u"(手动)|(自动)|(手波)|(手自一体)|(无极变速)|(双离合)", 0),
-            ("transmission", u"([AM]T)|(A[^T]+T)|CVT|GSG", 0),
+            ("series_num_zh", u"(\d{2,4}).+[年款]?", 1),
+            ("logo_zh", u"[\u2E80-\u9FFF]+[版型级]", 0),
+            #("transmission_zh", u"(手动)|(自动)|(手波)|(手自一体)|(无极变速)|(双离合)", 0),
+            #("transmission", u"([AM]T)|(A[^T]+T)|CVT|GSG", 0),
             ("engine", u"(\d\.\d?)(?![\d|万])(L|l|T|t|升|TSI|FSI|TFSI)?", 1),
             ("imports_zh", u"(进口)|(国产)|([\u2E80-\u9FFF]+)国", 0)]
 
@@ -30,15 +30,12 @@ class Processer(ProcesserBase):
                       ("car_series", "series", 0.2, 'str'),
                       ("car_emission", "engine", 0.08, 'abs'),
                       ("car_transmission", "transmission_zh", 0.04, 'str'),
-                      ("car_title", "logo_zh", 0.2, 'str'),
-                      ("car_title", "pattern_zh", 0.03, 'str'),
-                      ("car_keywords", "pattern_zh", 0.03, 'str'),
+                      ("car_title", "logo_zh", 0.1, 'str'),
+                      ("car_title", "pattern_zh", 0.13, 'str'),
+                      ("car_title", "series_num_zh", 0.1, 'str'),
                       ("car_description", "pattern_zh", 0.023, 'str'),
-                      ("car_condition", "pattern_zh", 0.023, 'str'),
                       ("car_birth", "producted_year", 0.03, 'str'),
-                      ("purchase_price_refer", "indicative_price", 0.024, 'num'),
-                      ("car_seats", "seats_num", 0.01, 'num'),
-                      ("car_doors", "door_num", 0.01, 'num')]
+                      ("purchase_price_refer", "indicative_price", 0.024, 'num'),]
 
     def _process(self, item, items, rule):
         """计算相似度，返回评分最高的一个
@@ -54,6 +51,7 @@ class Processer(ProcesserBase):
             new_item["car_series"] = doc["series"]
             new_item["vehicle_code"] = doc["vehicle_code"]
             new_item["car_type_score"] = sim_rs["similarity"]
+            self.logger.debug(repr(dc.opcodes))
             
             return new_item
 
@@ -72,6 +70,7 @@ class Processer(ProcesserBase):
         try:
             f_item = self._process(item, datas, self.rule1)
             f_item['title_fetched'] = len(datas)
+            self.logger.debug(repr(results))
             return f_item
         except:
             pass
@@ -124,100 +123,77 @@ class Processer(ProcesserBase):
             else:
                 score_3 += 0.05
             
-            if item['car_brand'] and item['car_series']:
-                score_1 += 0.1
-            elif item['car_brand'] or item['car_series']:
-                score_1 += 0.05
-                
             # 验证当前品牌和车系，包括转换同义词
-            new_brand = bsa.verify_brand(item['car_brand'])
-            new_series = bsa.verify_series(item['car_series'])
+            new_brand = bsa.verify_brand()
+            new_series = bsa.verify_series()
+            if not new_brand and new_series:
+                new_brand = self.cars.get_brand_by_series(new_series)
+
             sseg = self.simple_segment(item['car_title'])
-            if sseg.has_key('producted_year'):
-                del sseg['producted_year']
+            if item.get("car_emission"):
+                sseg["engine"] = item["car_emission"]
+            if item.get("car_publish_logo"):
+                sseg["series_num_zh"] = item["car_publish_logo"]
             item['seg_title'] = json.dumps(sseg)
             new_displacement = sseg.get("engine") or bsa.verify_emission(item['car_emission'])
 
             if new_brand and new_series:
                 smatched = self.simple_match(item, sseg, brand=new_brand, series=new_series)
                 if smatched:
+                    score_1 = 0.1
                     score_2 += 0.4
                     smatched['score_1'] = score_1
                     smatched['score_2'] = score_2
                     smatched['score_3'] = smatched['car_type_score']*40/100
                     smatched['car_type_score'] = (score_1 + score_2) + smatched['car_type_score']*40/100
-                    smatched['complete_step'] = u"品牌和车系校验通过"
+                    smatched['complete_step'] = u"缺省品牌和车系校验通过"
                     return smatched
+            # 如果以上步骤均未得出识别结果，则求助于jieba分词
+            segs = bsa.verify_segment()
+            seg_brand = segs.get("brand")
+            seg_series = segs.get("series")
+            if not seg_brand and seg_series:
+                seg_brand = self.cars.get_brand_by_series(seg_series)
+            if seg_brand and seg_series:
+                score_1 = 0.1
+                score_2 += 0.4
+                smatched = self.simple_match(item, sseg, **segs)
+                if smatched:
+                    smatched['seg_brand'] = seg_brand
+                    smatched['seg_series'] = seg_series
+                    smatched['score_1'] = score_1
+                    smatched['score_2'] = score_2
+                    smatched['score_3'] = smatched['car_type_score']*40/100
+                    smatched['car_type_score'] = (score_1 + score_2) + smatched['car_type_score']*40/100
+                    smatched['complete_step'] = u"分词品牌和车系校验通过"
+                    return smatched
+                
             # 如果品牌通过验证，则进入主要评分算法如果算法有返回，则车型识别结束
             if new_brand:
                 smatched = self.simple_match(item, sseg, brand=new_brand)
                 if smatched:
+                    score_1 = 0.05
                     score_2 += 0.4
                     smatched['score_1'] = score_1
                     smatched['score_2'] = score_2
                     smatched['score_3'] = smatched['car_type_score']*40/100
                     smatched['car_type_score'] = (score_1 + score_2) + smatched['car_type_score']*40/100
-                    smatched['complete_step'] = u"品牌校验通过"
+                    smatched['complete_step'] = u"缺省品牌校验通过"
                     return smatched
-            else:
-                # 否则判断车系是否通过验证
-                # 如果通过，则根据车系反查到品牌，然后再进入主要评分算法，并更新当前品牌
-                if new_series:
-                    new_brand = self.cars.get_brand_by_series(new_series)
-                    smatched = self.simple_match(item, sseg, brand=new_brand, series=new_series)
-                    if smatched:
-                        score_2 += 0.4
-                        smatched['score_1'] = score_1
-                        smatched['score_2'] = score_2
-                        smatched['score_3'] = smatched['car_type_score']*40/100
-                        smatched['car_type_score'] = (score_1 + score_2) + smatched['car_type_score']*40/100
-                        smatched['complete_step'] = u"车系校验通过"
-                        return smatched
 
-            # 如果以上步骤均未得出识别结果，则求助于jieba分词
-            if not new_brand:
-                segs = bsa.verify_segment()
-                if segs:
-                    if len(segs) == 2:
-                        score_2 += 0.4
-                    elif 'series' in segs:
-                        seg_brand = self.cars.get_brand_by_series(segs['series'])
-                        segs['brand'] = seg_brand
-                        score_2 += 0.35
-                    elif 'brand' in segs:
-                        score_2 += 0.35
-
-                    smatched = self.simple_match(item, sseg, **segs)
-                    if smatched:
-                        smatched['seg_brand'] = segs.get('brand')
-                        smatched['seg_series'] = segs.get('series')
-                        smatched['score_1'] = score_1
-                        smatched['score_2'] = score_2
-                        smatched['score_3'] = smatched['car_type_score']*40/100
-                        smatched['car_type_score'] = (score_1 + score_2) + smatched['car_type_score']*40/100
-                        smatched['complete_step'] = u"分词得到品牌和车系"
-                        return smatched
-
-            # 最后补救，处理只有一个品牌被识别的情况，
-            # 如果排量也存在，则品牌和排量组成条件去提取车型库里的车型
-            if new_brand:
-                _item = item.copy()
-                condition = {'brand': new_brand}
-                _item['car_brand'] = new_brand
-                if new_displacement:
-                    condition['engine'] = new_displacement
-                    _item['car_emission'] = new_displacement
-
-                smatched = self.simple_match(item, sseg, **condition)
+            if seg_brand:
+                smatched = self.simple_match(item, sseg, brand=seg_brand)
                 if smatched:
-                    score_2 += 0.3
+                    score_1 = 0.05
+                    score_2 += 0.4
                     smatched['score_1'] = score_1
                     smatched['score_2'] = score_2
                     smatched['score_3'] = smatched['car_type_score']*40/100
-                    smatched['car_type_score'] = (score_1 + score_2) + ritem['car_type_score']*40/100
-                    smatched['complete_step'] = u"由品牌和排量以及标题关键字得出结果"
+                    smatched['car_type_score'] = (score_1 + score_2) + smatched['car_type_score']*40/100
+                    smatched['complete_step'] = u"分词品牌校验通过"
                     return smatched
 
+            # 最后补救，处理只有一个品牌被识别的情况，
             # 在品牌和车系都还未知的情况下，只根据正则提取出来的关键字从sqlite里查找相应的车型
             # 如果有记录，并且记录数小于100(为保证运行效率，只处理数量小于100的)，
             # 则进行评分，得到结果后直接返回，车型识别结束
@@ -259,25 +235,26 @@ def test():
 
     from lib.index_port.client import pusher
 
-    rd = redis.Redis(host='192.168.2.228', db=14)
+    #rd = redis.Redis(host='192.168.2.228', db=14)
 
-    p = pusher()
+    #p = pusher()
     
-    mconn = pymongo.Connection('192.168.2.229', 2291)
-    mdb = mconn['dcrawler_final']
+    mconn = pymongo.Connection('192.168.2.228', 2281)
+    mdb = mconn['dcrawler']
     
     #items = mdb.car_info.find({'car_series': '200'}, timeout=False)
-    #items = mdb.car_info.find({'id': '649508DE478A0752D4197DA40E9639E4'})
+    items = mdb.car_info.find({'id': 'ed659b4257b259e363739ad024a2001b'})
     #items = mdb.car_info.find({'shorturl': 'hxcf1isyb'})
-    items = mdb.car_info.find(timeout=False).skip(1000000)
+    #items = mdb.car_info.find(timeout=False).skip(1000000)
 
     ps = Processer()
     for item in items:
-        if rd.sismember('car_type_push', unicode(item['_id'])):
-            continue
-        item["car_brand"] = item.get("car_brand_old", item["car_brand"])
-        item['car_series'] = item.get('car_series_old', item['car_series'])
-        item['car_type'] = item.get('car_type_old', item['car_type'])
+        item["purchase_price_refer"] = 99300
+        #if rd.sismember('car_type_push', unicode(item['_id'])):
+        #    continue
+        #item["car_brand"] = item.get("car_brand_old", item["car_brand"])
+        #item['car_series'] = item.get('car_series_old', item['car_series'])
+        #item['car_type'] = item.get('car_type_old', item['car_type'])
         #item['car_brand_old'] = ''
         #item['car_series_old'] = ''
         #item['car_type_old'] = ''
@@ -285,20 +262,20 @@ def test():
         try:
             rs = ps.process(item)
         except Exception, e:
-            rd.sadd('car_type_error', unicode(item['_id']))
+            #rd.sadd('car_type_error', unicode(item['_id']))
             print "Error: item %s process error!!" % unicode(item['_id'])
             print e
             continue
         if rs:
-            #print "title: %s" % item['car_title']
-            #print "url: %s" % item['url']
-            #print "car_brand old: '%s'" % item['car_brand']
-            #print "car_brand new: '%s'" % rs['car_brand']
-            #print "car_series old: '%s'" % item['car_series']
-            #print "car_series new: '%s'" % rs['car_series']
-            #print "car_type old: '%s'" % item['car_type']
-            #print "car_type new: '%s'" % rs['car_type']
-            #print "vehicle_code: %s" % rs['vehicle_code']
+            print "title: %s" % item['car_title']
+            print "url: %s" % item['url']
+            print "car_brand old: '%s'" % item['car_brand']
+            print "car_brand new: '%s'" % rs['car_brand']
+            print "car_series old: '%s'" % item['car_series']
+            print "car_series new: '%s'" % rs['car_series']
+            print "car_type old: '%s'" % item['car_type']
+            print "car_type new: '%s'" % rs['car_type']
+            print "vehicle_code: %s" % rs['vehicle_code']
             #print "score_1: %s, score_2: %s, score_3: %s" % (rs['score_1'], rs['score_2'], rs['score_3'])
             #print "score: %s" % rs['car_type_score']
             #print "complete step: %s" % rs['complete_step']
@@ -317,16 +294,16 @@ def test():
             if 'seg_series' in rs:
                 del rs['seg_series']
             """
-            try:
-                push_rs = p.push(rs)
-            except:
-                rd.sadd('car_type_error', unicode(item['_id']))
-                print "Error: item %s push error!!" % unicode(item['_id'])
-                continue
+            #try:
+            #    push_rs = p.push(rs)
+            #except:
+            #    rd.sadd('car_type_error', unicode(item['_id']))
+            #    print "Error: item %s push error!!" % unicode(item['_id'])
+            #    continue
                 
-            rd.sadd('car_type_push', unicode(item['_id']))
-            rd.srem('car_type_error', unicode(item['_id']))
-            print '### Push index ok with result: %s ###' % str(push_rs)
+            #rd.sadd('car_type_push', unicode(item['_id']))
+            #rd.srem('car_type_error', unicode(item['_id']))
+            #print '### Push index ok with result: %s ###' % str(push_rs)
             
         else:
             print "[Warning!!!]item has been ignore, url: %s" % item['url']

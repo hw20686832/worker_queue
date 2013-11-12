@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 #coding: utf-8
 import re
-from optparse import OptionParser
 from collections import defaultdict
-
-from pymongo import Connection
 
 def segment(rule, strs):
     """正则提取，根据指定的规则从字符串中提取相应的文字，规则格式为tuple list
@@ -46,6 +43,8 @@ def segment(rule, strs):
     return dd
 
 def test(seg_rule):
+    from pymongo import Connection
+    
     mongo = Connection(host='192.168.2.219')
     db = mongo["dcrawler_final"]
 
@@ -70,6 +69,7 @@ def test(seg_rule):
 
 if __name__ == "__main__":
     import sys
+    from optparse import OptionParser
 
     #title = u"【上海】 奔驰 B级(进口) 2009款 B200 时尚型 2.0L"
     #title1 = u"【上海】 奔驰 ML级(进口) 2010款 ML350 4MATIC 豪华型特别版"

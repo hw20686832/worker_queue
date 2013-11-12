@@ -2,9 +2,9 @@
 """
 省份地区规整化
 """
-import sys,os
-JIEBA_LOCATION = os.path.realpath(os.path.join(os.path.dirname(__file__),"lib","segment"))
-sys.path.append(JIEBA_LOCATION)
+import sys
+import os
+
 from base import ProcesserBase
 from lib import Process23Main
 from lib.Process23Main import CarSpecification

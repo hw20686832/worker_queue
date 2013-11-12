@@ -155,14 +155,28 @@ class CarSpecification(object):
 
     def get_car_data(self, **kwargs):
         sql = "select s.brand brand, s.series series, d.* from car_datas d left join cars s on d.vehicle_code = s.vid %s"
-        f = lambda a: "s.%s = '%s'" % a if a[0] in ('brand', 'series') else "d.%s like '%%%s%%'" % a
-        #f = lambda a: "s.%s = '%s'" % a if a[0] in ('brand', 'series') else "d.%s = '%s'" % a
+
+        def gen_sql(a):
+            for k, w in a.items():
+                if k in ('brand', 'series'):
+                    yield "s.%s = '%s'" % (k, w)
+                else:
+                    if k == 'series_num_zh':
+                        yield u"(d.producted_year like '%%%s%%' or d.producted_year is null or d.series_num_zh like '%%%s%%' or d.series_num_zh is null or d.pattern_zh like '%%%s%%')" % (w, w, w)
+                    else:
+                        yield "(d.%s like '%%%s%%' or d.%s is null)" % (k, w, k)
         
-        where_cluster = "where %s" % ' and '.join([f(args) for args in kwargs.items()])
+        where_cluster = "where %s" % ' and '.join(gen_sql(kwargs))
         final_sql = sql % where_cluster
         cursor = self.db.cursor()
         cursor.execute(final_sql)
         rs = cursor.fetchall()
+
+        #if not rs:
+        #    del kwargs["producted_year"]
+        #    where_cluster = "where %s" % ' and '.join(gen_sql(kwargs))
+        #    cursor.execute(sql % where_cluster)
+        #    rs = cursor.fetchall()
         
         data = [dict(zip([i[0] for i in cursor.description], x)) for x in rs]
         return data
