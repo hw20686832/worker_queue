@@ -15,8 +15,7 @@ class processer(ProcesserBase):
     def __init__(self):
         ProcesserBase.__init__(self)   
         redis_host = '192.168.2.228'
-        redis_port = 6379
-        self.rd6 = redis.Redis(redis_host, redis_port, db=6)
+        redis_port = 6381
         self.rd7 = redis.Redis(redis_host, redis_port, db=7)
 
     def process(self, data):
@@ -25,9 +24,6 @@ class processer(ProcesserBase):
         定义在车源标题、车型、里程数、地区、联系方式、价格、车龄都完全相同的车源，为重复车源
         在前台隐藏不展示，但数据库中不删除，便于后续数据分析
         """
-        if self.rd6.zscore("avurls:%s" % data["domain"], data["url"]):
-            return data
-
         keys = ("car_title", "car_type", "car_mileage",
                 "car_price", "car_birth", "source_province", "source_zone")
         m = hashlib.md5()

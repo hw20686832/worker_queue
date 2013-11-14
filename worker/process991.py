@@ -22,7 +22,7 @@ class Processer(ProcesserBase):
         ProcesserBase.__init__(self)
 
         self.rdb3 = redis.Redis(host='122.192.66.45', db=3)
-        self.rd = redis.Redis(host="192.168.2.228", db=6)
+        #self.rd = redis.Redis(host="192.168.2.228", db=6)
 #        self.mdb = redis.Redis(host="192.168.2.233")
         conn = pymongo.Connection('192.168.2.229', 2291)
         self.db = conn.dcrawler_final
@@ -109,7 +109,7 @@ class Processer(ProcesserBase):
             self.sendMyself.send(data)
         
         self.logger.info("item %s push ok." % data['url'])
-        self.rd.zadd("avurls:%s" % data['domain'], data['url'], time.time())
+        #self.rd.zadd("avurls:%s" % data['domain'], data['url'], time.time())
         is_exists = self.db.car_info.find_one({'url': data['url']})
         if is_exists:
             self.logger.debug('(%s) old item append %s (%s) to queues.' % (data['domain'], data['url'], data['id']))
