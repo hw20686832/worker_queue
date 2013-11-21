@@ -62,6 +62,8 @@ class ProcesserBase(object):
     
     def __init__(self):
         self.logger = logger(logfilepath='log/%s.%s.log' % (self.seq, os.getpid())).getLogger()
+
+        self.logrd = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=5)
         
         self.rabbitmq_server = settings.RABBITMQ_SERVER
         self.rabbitmq_port = settings.RABBITMQ_PORT
@@ -142,17 +144,24 @@ class ProcesserBase(object):
         
     def _recevie(self):
         """接收信息"""
-        self.logger.info('[%s] Waiting for message. To exit press CTRL+C' % self.seq)
         def callback(ch, method, properties, body):
             new_data = None
             data = json.loads(body, encoding='utf-8')
-            if self.seq == 'process00':
-                self.logger.info("[%s] New process item received %s" % (data['domain'], data['url']))
+            log_data = {
+                "url": data["url"], "domain": data["domain"],
+                "processer": self.seq
+            }
+            if self.seq == 'p00':
+                self.logrd.zadd("log:processing:in", json.dumps(log_data), time.time())
             try:
                 new_data = self.process(data)
-            except Exception:
+                if not new_data and not self.seq in ('p990', 'p991'):
+                    self.logrd.zadd("log:processing:ignore", json.dumps(log_data), time.time())
+            except Exception, e:
                 exc_tuple = sys.exc_info()
                 d_info = ''.join(traceback.format_tb(exc_tuple[2], 3)[1:])
+                log_data["msg"] = e.message
+                self.logrd.zadd("log:processing:exception", json.dumps(log_data), time.time())
                 self.logger.error("An error occurred while %s processing the data [%s].%s\n%s\n%s" \
                                   % (self.seq, data.get("id", "unknow"), exc_tuple[0], exc_tuple[1], d_info))
             finally:
