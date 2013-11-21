@@ -30,7 +30,7 @@ class Processer(ProcesserBase):
         self.logger.info("item %s push ok." % item['url'])
         
         #self.rd.zadd("avurls:%s" % data['domain'], data['url'], time.time())
-        is_exists = self.db.car_info.find_one({'url': data['url']})
+        is_exists = self.db.car_info.find_one({'url': item['url']})
         if is_exists:
             self.logger.debug('(%s) old item append %s (%s) to queues.' % (item['domain'], item['url'], item['id']))
         else:
