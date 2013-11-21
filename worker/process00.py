@@ -9,7 +9,6 @@ class processer(ProcesserBase):
     seq = "p00"
     
     def process(self, item):
-        self.logger.info("(%s) Item start processing." % data['domain'])
         item["spider"] = item["domain"]
         keys = ["car_title","car_brand","car_series","contact_phone","contact_mobile","car_price",
                 "source_province","source_zone","car_mileage","car_emission","car_transmission","car_type",
