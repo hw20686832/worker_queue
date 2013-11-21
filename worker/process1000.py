@@ -3,7 +3,7 @@ import redis
 import pymongo
 import pysolr
 
-from base import ProcessBase
+from base import ProcesserBase
 from lib.pushIndexHelper import PushIndexHelper
 
 class Processer(ProcessBase):

@@ -7,3 +7,4 @@ pymongo
 redis
 gridfs
 thrift
+pysolr
