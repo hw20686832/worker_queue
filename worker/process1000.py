@@ -17,12 +17,12 @@ class Processer(ProcesserBase):
         self.helper = PushIndexHelper()
         
     def process(self, item):
-        self.solr.add(self.helper.constructData(item))
-        self.logger.info("item %s push ok." % data['url'])
+        self.solr.add([self.helper.constructData(item), ])
+        self.logger.info("item %s push ok." % item['url'])
         
         #self.rd.zadd("avurls:%s" % data['domain'], data['url'], time.time())
         is_exists = self.db.car_info.find_one({'url': data['url']})
         if is_exists:
-            self.logger.debug('(%s) old item append %s (%s) to queues.' % (data['domain'], data['url'], data['id']))
+            self.logger.debug('(%s) old item append %s (%s) to queues.' % (item['domain'], item['url'], item['id']))
         else:
-            self.logger.debug('(%s) new item append %s (%s) to queues.' % (data['domain'], data['url'], data['id']))
+            self.logger.debug('(%s) new item append %s (%s) to queues.' % (item['domain'], item['url'], item['id']))
