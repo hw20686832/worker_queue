@@ -26,7 +26,7 @@ class Processer(ProcesserBase):
         except:
             traceback.print_exc()
 
-        assert self.ipusher.push(data)[0] == "{success:'T'}"
+        assert self.ipusher.push(item)[0] == "{success:'T'}"
         self.logger.info("item %s push ok." % item['url'])
         
         #self.rd.zadd("avurls:%s" % data['domain'], data['url'], time.time())
