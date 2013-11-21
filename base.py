@@ -54,7 +54,9 @@ class ProcessManager(object):
         return pscls(**process_kwargs)
     
     def get_list(self):
-        return sorted(self._processes.keys())
+        seqs = self._processes.keys()
+        seqs.sort(key=lambda x: int(x[1:]))
+        return seqs
 
 class ProcesserBase(object):
     """processer的基类"""
