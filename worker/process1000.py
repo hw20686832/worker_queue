@@ -1,9 +1,12 @@
 #coding:utf-8
+import traceback
+
 import redis
 import pymongo
 import pysolr
 
 from base import ProcesserBase
+from lib.index_port.client import pusher
 from lib.pushIndexHelper import PushIndexHelper
 
 class Processer(ProcesserBase):
@@ -15,9 +18,15 @@ class Processer(ProcesserBase):
 
         self.solr = pysolr.Solr('http://192.168.2.233:1984/solr/', timeout=10)
         self.helper = PushIndexHelper()
+        self.ipusher = pusher()
         
     def process(self, item):
-        self.solr.add([self.helper.constructData(item), ])
+        try:
+            self.solr.add([self.helper.constructData(item), ])
+        except:
+            traceback.print_exc()
+
+        assert self.ipusher.push(data)[0] == "{success:'T'}"
         self.logger.info("item %s push ok." % item['url'])
         
         #self.rd.zadd("avurls:%s" % data['domain'], data['url'], time.time())
