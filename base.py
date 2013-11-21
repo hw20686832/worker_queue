@@ -8,6 +8,7 @@ import inspect
 from pkgutil import iter_modules
 
 import pika
+import redis
 
 import settings
 from lib.log4mongo.logger import logger
