@@ -1,9 +1,10 @@
 #coding:utf-8
 import redis
 import pymongo
+import pysolr
 
-from lib import solr
 from base import ProcessBase
+from lib.pushIndexHelper import PushIndexHelper
 
 class Processer(ProcessBase):
     seq = "p1000"
@@ -11,9 +12,12 @@ class Processer(ProcessBase):
     def __init__(self):
         ProcesserBase.__init__(self)
         self.db = pymongo.Connection("192.168.2.229", 2291).dcrawler_final
+
+        self.solr = pysolr.Solr('http://192.168.2.233:1984/solr/', timeout=10)
+        self.helper = PushIndexHelper()
         
     def process(self, item):
-        solr.add(data)
+        self.solr.add(self.helper.constructData(item))
         self.logger.info("item %s push ok." % data['url'])
         
         #self.rd.zadd("avurls:%s" % data['domain'], data['url'], time.time())
