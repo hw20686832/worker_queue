@@ -6,7 +6,7 @@ import pysolr
 from base import ProcesserBase
 from lib.pushIndexHelper import PushIndexHelper
 
-class Processer(ProcessBase):
+class Processer(ProcesserBase):
     seq = "p1000"
     
     def __init__(self):
