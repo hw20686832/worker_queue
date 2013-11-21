@@ -1,16 +1,16 @@
 #coding:utf-8
 """
+数据清洗初步准备
 清除Field数量不足69个的数据
 """
 from base import ProcesserBase
 
 class processer(ProcesserBase):
-    """数据清洗初步准备"""
     seq = "p00"
     
-    def process(self,data):
+    def process(self, item):
         self.logger.info("(%s) Item start processing." % data['domain'])
-        
+        item["spider"] = item["domain"]
         keys = ["car_title","car_brand","car_series","contact_phone","contact_mobile","car_price",
                 "source_province","source_zone","car_mileage","car_emission","car_transmission","car_type",
                 "car_seats","car_cylinder","car_doors","car_drive_type","car_outer_color","car_inner_color",
@@ -24,7 +24,7 @@ class processer(ProcesserBase):
                 "car_license","car_license_type","car_license_at"]
 
         full_item = dict.fromkeys(keys, "")
-        full_item.update(data)
+        full_item.update(item)
 
         return full_item
         

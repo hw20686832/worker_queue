@@ -9,14 +9,10 @@ from lib import FieldArrange
 class processer(ProcesserBase):
     seq = "p13"
     
-    def __init__(self):
-        ProcesserBase.__init__(self)        
-    
-    def process(self,data):
-        
-        spider = data['spider']
+    def process(self,data):        
+        spider = data['domain']
         for case in switch(spider):
-            if case('58'):
+            if case('58.com'):
                 car_images = FieldArrange._replace58Tinyimg(data['car_images'])
                 data['car_images'] = car_images
                 
@@ -26,7 +22,7 @@ class processer(ProcesserBase):
                 car_img_thumb = FieldArrange._arrange58img(data['car_img_thumb'])
                 data['car_img_thumb'] = car_img_thumb
                 
-            if case('9che'):
+            if case('9che.com'):
                 car_condition = FieldArrange._drop9chesharp(data['car_condition'])
                 data['car_condition'] = car_condition
                 
